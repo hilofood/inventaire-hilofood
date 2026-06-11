@@ -346,7 +346,7 @@ function icon(cat){ return CAT_ICONS[cat] || "\uD83D\uDCCB"; }
 function k(s){ return s.replace(/[^a-zA-Z0-9]/g,"_"); }
 
 async function loadCatalogue(){
-  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="VOTRE_URL_WEB_APP_ICI"){
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==="https://script.google.com/macros/s/AKfycbwW6fP71eqVUC0fn4tq0q34HbEeED_zUq2-t7qwSiAD15311-jmSEA2AUTpTwTDpNS2/exec"){
     INVENTORY=[
       {cat:"Frigo",article:"Courgettes 14/21",unite:"kg"},
       {cat:"Frigo",article:"Aubergines",unite:"kg"},
@@ -507,7 +507,7 @@ async function sendData(collab,restaurant,date){
     else { payload.stocks[item.article]=parseFloat(values[item.article]); }
   });
   try{
-    if(APPS_SCRIPT_URL!=="VOTRE_URL_WEB_APP_ICI") await fetch(APPS_SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)});
+    if(APPS_SCRIPT_URL!=="https://script.google.com/macros/s/AKfycbwW6fP71eqVUC0fn4tq0q34HbEeED_zUq2-t7qwSiAD15311-jmSEA2AUTpTwTDpNS2/exec") await fetch(APPS_SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)});
     const nb=payload.ruptures.length;
     document.getElementById("success-msg").textContent=INVENTORY.length+" articles envoy\u00e9s pour "+restaurant+"\n"+new Date(date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})+" \u2014 par "+collab+(nb>0?"\n\u26A0\uFE0F "+nb+" rupture"+(nb>1?"s":"")+" signal\u00e9e"+(nb>1?"s":""):"");
     document.getElementById("success-screen").classList.add("show");
@@ -531,5 +531,4 @@ loadCatalogue();
 </script>
 </body>
 </html>
-
 
