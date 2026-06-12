@@ -324,7 +324,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxumDzbpy6afLfX2wwmHIsqP75KlHSjyfGvBhwJHp1WOBvD3DrippymsB2BUDXj5kk/exec";
+const APPS_SCRIPT_URL = "VOTRE_URL_WEB_APP_ICI";
 const LS_KEY = "hilo_inventaire_draft";
 
 let INVENTORY = [];
@@ -724,7 +724,7 @@ async function sendData(collab, restaurant, date) {
   const payload = {
     restaurant, date,
     collaborateur: collab,
-    stocks: {}, ruptures: [], unites: {}, itemComments: {},
+    stocks: {}, ruptures: [], unites: {}, itemComments: {}, stocksBas: [],
     commentaires: {
       commandes: document.getElementById("comment-commandes").value,
       saison:    document.getElementById("comment-saison").value,
@@ -742,6 +742,18 @@ async function sendData(collab, restaurant, date) {
     }
     if (comments[item.article] && comments[item.article].trim()) {
       payload.itemComments[item.article] = comments[item.article].trim();
+    }
+    // Vérification stock minimum
+    if (!ruptures[item.article] && item.stockMin !== null && item.stockMin !== undefined) {
+      const qty = parseFloat(values[item.article]);
+      if (!isNaN(qty) && qty < item.stockMin) {
+        payload.stocksBas.push({
+          article:  item.article,
+          quantite: qty,
+          stockMin: item.stockMin,
+          unite:    item.unite
+        });
+      }
     }
   });
 
