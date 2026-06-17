@@ -391,10 +391,11 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysHoHVUlLs4336uuTpW0BSS0Ulj6O9FzTo4kJpSPaG9D29uBEPP8ESGfjMNNshNOAz/exec";
 const LS_KEY = "hilo_inventaire_draft";
 
-let INVENTORY = [];
-let values    = {};   // article -> quantité string
-let ruptures  = {};   // article -> bool
-let comments  = {};   // article -> string (commentaire par produit)
+let INVENTORY   = [];
+let values      = {};   // id -> quantité string
+let ruptures    = {};   // id -> bool
+let comments    = {};   // id -> string (commentaire par produit)
+let idToName    = {};   // id -> nom affiché (pour l'affichage uniquement)
 let sentinelArticle = null;
 let sentinelShown   = false;
 
@@ -448,10 +449,10 @@ function applyDraft(draft) {
   if (draft.commentGeneral)   document.getElementById("comment-general").value   = draft.commentGeneral;
 
   INVENTORY.forEach(item => {
-    const sk = safeKey(item.article);
-    if (draft.values  && draft.values[item.article]   !== undefined) values[item.article]   = draft.values[item.article];
-    if (draft.ruptures && draft.ruptures[item.article] !== undefined) ruptures[item.article] = draft.ruptures[item.article];
-    if (draft.comments && draft.comments[item.article] !== undefined) comments[item.article] = draft.comments[item.article];
+    const sk = safeKey(item.id);
+    if (draft.values   && draft.values[item.id]   !== undefined) values[item.id]   = draft.values[item.id];
+    if (draft.ruptures && draft.ruptures[item.id] !== undefined) ruptures[item.id] = draft.ruptures[item.id];
+    if (draft.comments && draft.comments[item.id] !== undefined) comments[item.id] = draft.comments[item.id];
 
     const inp = document.getElementById("inp-" + sk);
     const btn = document.getElementById("rup-" + sk);
@@ -459,19 +460,19 @@ function applyDraft(draft) {
     const zon = document.getElementById("czon-" + sk);
     const ta  = document.getElementById("cta-" + sk);
 
-    if (ruptures[item.article] && inp && btn) {
+    if (ruptures[item.id] && inp && btn) {
       inp.disabled = true;
       inp.value    = "";
       btn.classList.add("active");
-    } else if (inp && values[item.article]) {
-      inp.value = values[item.article];
+    } else if (inp && values[item.id]) {
+      inp.value = values[item.id];
     }
-    if (comments[item.article] && ta) {
-      ta.value = comments[item.article];
+    if (comments[item.id] && ta) {
+      ta.value = comments[item.id];
       if (tog) tog.classList.add("has-comment");
       if (zon) { zon.classList.add("open"); }
     }
-    refreshCard(item.article);
+    refreshCard(item.id);
   });
   updateProgress();
 }
@@ -558,7 +559,7 @@ function buildForm() {
   values = {}; ruptures = {}; comments = {};
   sentinelShown = false;
   if (INVENTORY.length > 0) {
-    sentinelArticle = INVENTORY[Math.floor(Math.random() * INVENTORY.length)].article;
+    sentinelArticle = INVENTORY[Math.floor(Math.random() * INVENTORY.length)].id;
   }
 
   const body = document.getElementById("form-body");
@@ -587,17 +588,16 @@ function buildForm() {
 }
 
 function buildCard(grid, item) {
-  values[item.article]   = "";
-  ruptures[item.article] = false;
-  comments[item.article] = "";
+  values[item.id]   = "";
+  ruptures[item.id] = false;
+  comments[item.id] = "";
+  idToName[item.id] = item.article;
 
-  const sk   = safeKey(item.article);
+  const sk   = safeKey(item.id);
+  const id   = item.id;
   const card = document.createElement("div");
   card.className = "article-card";
   card.id        = "card-" + sk;
-
-  // Échapper les apostrophes pour les onclick inline
-  const esc = item.article.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
   card.innerHTML =
     '<div class="card-top">' +
@@ -606,21 +606,21 @@ function buildCard(grid, item) {
         '<div class="article-unit">' + item.unite + '</div>' +
       '</div>' +
       '<div class="qty-control">' +
-        '<button class="qty-btn" onclick="adjust(\'' + esc + '\',-1)" type="button">\u2212</button>' +
+        '<button class="qty-btn" onclick="adjust(\'' + id + '\',-1)" type="button">\u2212</button>' +
         '<input class="qty-input" type="number" inputmode="decimal" min="0" step="0.5"' +
           ' placeholder="\u2014" id="inp-' + sk + '"' +
-          ' oninput="setValue(\'' + esc + '\',this.value)"' +
-          ' onblur="checkSentinel(\'' + esc + '\')">' +
-        '<button class="qty-btn" onclick="adjust(\'' + esc + '\',1)" type="button">+</button>' +
+          ' oninput="setValue(\'' + id + '\',this.value)"' +
+          ' onblur="checkSentinel(\'' + id + '\')">' +
+        '<button class="qty-btn" onclick="adjust(\'' + id + '\',1)" type="button">+</button>' +
         '<button class="rupture-btn" id="rup-' + sk + '"' +
-          ' onclick="toggleRupture(\'' + esc + '\')" type="button">Rupture</button>' +
+          ' onclick="toggleRupture(\'' + id + '\')" type="button">Rupture</button>' +
         '<button class="comment-toggle" id="ctog-' + sk + '"' +
-          ' onclick="toggleComment(\'' + esc + '\')" type="button" title="Ajouter un commentaire">&#128172;</button>' +
+          ' onclick="toggleComment(\'' + id + '\')" type="button" title="Ajouter un commentaire">&#128172;</button>' +
       '</div>' +
     '</div>' +
     '<div class="comment-zone" id="czon-' + sk + '">' +
       '<textarea id="cta-' + sk + '" placeholder="Commentaire sur ce produit\u2026"' +
-        ' oninput="setComment(\'' + esc + '\',this.value)" rows="2"></textarea>' +
+        ' oninput="setComment(\'' + id + '\',this.value)" rows="2"></textarea>' +
     '</div>';
 
   grid.appendChild(card);
@@ -704,7 +704,7 @@ function isDone(key) { return ruptures[key] || values[key] !== ""; }
 function checkSentinel(key) {
   if (sentinelShown || key !== sentinelArticle || !isDone(key)) return;
   sentinelShown = true;
-  document.getElementById("sentinel-name").textContent = key;
+  document.getElementById("sentinel-name").textContent = idToName[key] || key;
   document.getElementById("sentinel-pop").classList.add("show");
 }
 function closeSentinel() {
@@ -714,7 +714,7 @@ function closeSentinel() {
 // ─── PROGRESSION ─────────────────────────────────────────
 function updateProgress() {
   const total  = INVENTORY.length;
-  const filled = INVENTORY.filter(i => isDone(i.article)).length;
+  const filled = INVENTORY.filter(i => isDone(i.id)).length;
   const pct    = total ? Math.round(filled / total * 100) : 0;
   document.getElementById("progress-fill").style.width = pct + "%";
   document.getElementById("progress-label").textContent =
@@ -725,7 +725,7 @@ function updateProgress() {
   const cats = [...new Set(INVENTORY.map(i => i.cat))];
   cats.forEach(cat => {
     const items = INVENTORY.filter(i => i.cat === cat);
-    const done  = items.filter(i => isDone(i.article)).length;
+    const done  = items.filter(i => isDone(i.id)).length;
     const el    = document.getElementById("count-" + safeKey(cat));
     if (el) { el.textContent = done + " / " + items.length; el.classList.toggle("done", done === items.length); }
   });
@@ -755,7 +755,7 @@ function submitForm() {
   if (!restaurant) { showToast("Merci de choisir le restaurant."); return; }
   if (!date)       { showToast("Merci de renseigner la date."); return; }
 
-  const missing = INVENTORY.filter(i => !isDone(i.article));
+  const missing = INVENTORY.filter(i => !isDone(i.id));
   if (missing.length > 0) {
     const list = document.getElementById("missing-list");
     list.innerHTML = "";
@@ -801,19 +801,19 @@ async function sendData(collab, restaurant, date) {
   };
 
   INVENTORY.forEach(item => {
-    payload.unites[item.article] = item.unite;
-    if (ruptures[item.article]) {
-      payload.stocks[item.article]  = 0;
-      payload.ruptures.push(item.article);
+    payload.unites[item.id] = item.unite;
+    if (ruptures[item.id]) {
+      payload.stocks[item.id]  = 0;
+      payload.ruptures.push(item.id);
     } else {
-      payload.stocks[item.article] = parseFloat(values[item.article]);
+      payload.stocks[item.id] = parseFloat(values[item.id]);
     }
-    if (comments[item.article] && comments[item.article].trim()) {
-      payload.itemComments[item.article] = comments[item.article].trim();
+    if (comments[item.id] && comments[item.id].trim()) {
+      payload.itemComments[item.id] = comments[item.id].trim();
     }
     // Vérification stock minimum
-    if (!ruptures[item.article] && item.stockMin !== null && item.stockMin !== undefined) {
-      const qty = parseFloat(values[item.article]);
+    if (!ruptures[item.id] && item.stockMin !== null && item.stockMin !== undefined) {
+      const qty = parseFloat(values[item.id]);
       if (!isNaN(qty) && qty < item.stockMin) {
         payload.stocksBas.push({
           article:  item.article,
