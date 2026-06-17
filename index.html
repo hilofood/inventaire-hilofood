@@ -107,6 +107,7 @@
   .qty-input::-webkit-inner-spin-button,.qty-input::-webkit-outer-spin-button{-webkit-appearance:none;}
   .qty-input:focus{border-color:var(--teal);background:var(--paper);}
   .qty-input:disabled{opacity:0.35;}
+  .qty-input.zero{color:#C62828;font-weight:700;}
   .rupture-btn{padding:7px 10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);
     background:var(--sand);color:var(--text-soft);font-family:"Raleway",sans-serif;
     font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
@@ -129,6 +130,32 @@
   .comment-zone textarea::placeholder{color:#9eb8b6;font-style:italic;}
 
   /* SENTINEL */
+  /* ── Écran PIN ── */
+  .pin-screen{position:fixed;inset:0;background:var(--teal-deep);z-index:1100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+  .pin-screen.hide{display:none;}
+  .pin-box{background:#fff;border-radius:20px;padding:36px 32px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+  .pin-box h2{font-size:20px;font-weight:800;color:var(--teal-ink);margin-bottom:6px;}
+  .pin-box p{font-size:13px;color:var(--text-soft);margin-bottom:20px;}
+  .pin-input{width:100%;font-size:24px;letter-spacing:8px;text-align:center;border:2px solid var(--border);border-radius:12px;padding:14px;outline:none;font-family:inherit;}
+  .pin-input:focus{border-color:var(--teal);}
+  .pin-btn{margin-top:16px;width:100%;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .pin-btn:active{background:var(--teal-deep);}
+  .pin-error{color:#C62828;font-size:13px;margin-top:10px;min-height:18px;}
+  /* ── Popup double soumission ── */
+  .double-pop{position:fixed;inset:0;background:rgba(10,40,42,0.5);z-index:900;display:none;align-items:center;justify-content:center;padding:20px;}
+  .double-pop.show{display:flex;}
+  .double-box{background:#fff;border-radius:18px;padding:28px 24px;max-width:380px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,0.25);animation:popin 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+  .double-box h3{font-size:16px;font-weight:800;color:#E65100;margin-bottom:10px;}
+  .double-box p{font-size:13px;color:#444;line-height:1.6;margin-bottom:18px;}
+  .double-actions{display:flex;gap:10px;}
+  .double-actions button{flex:1;padding:11px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .double-cancel{background:#F0F0EA;color:#555;}
+  .double-confirm{background:var(--teal);color:#fff;}
+  /* ── Mode d'emploi ── */
+  .howto{background:#F0FFF4;border:1px solid #B7E4C7;border-radius:14px;padding:16px 20px;margin-bottom:22px;}
+  .howto-title{font-size:11px;font-weight:800;text-transform:uppercase;color:var(--teal-deep);letter-spacing:.06em;margin-bottom:10px;}
+  .howto ul{margin:0;padding:0 0 0 18px;}
+  .howto li{font-size:12px;color:var(--text);line-height:1.7;}
   .sentinel-pop{position:fixed;inset:0;background:rgba(10,40,42,0.45);z-index:800;
     display:none;align-items:center;justify-content:center;padding:24px;}
   .sentinel-pop.show{display:flex;}
@@ -219,6 +246,30 @@
 </style>
 </head>
 <body>
+<!-- ── Écran PIN ── -->
+<div class="pin-screen" id="pin-screen">
+  <div class="pin-box">
+    <h2>🔒 Accès Inventaire</h2>
+    <p>Entrez le code PIN pour accéder au formulaire</p>
+    <input class="pin-input" type="password" inputmode="numeric" maxlength="8" id="pin-input"
+      placeholder="••••" onkeydown="if(event.key==='Enter')checkPin()">
+    <button class="pin-btn" onclick="checkPin()">Accéder</button>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ── Popup double soumission ── -->
+<div class="double-pop" id="double-pop">
+  <div class="double-box">
+    <h3>⚠️ Inventaire déjà soumis</h3>
+    <p id="double-msg">Un inventaire a déjà été soumis cette semaine pour ce restaurant.</p>
+    <div class="double-actions">
+      <button class="double-cancel" onclick="closeDouble()">Annuler</button>
+      <button class="double-confirm" onclick="closeDouble()">Continuer quand même</button>
+    </div>
+  </div>
+</div>
+
 <div class="page-content">
 
 <div class="loading-screen" id="loading-screen">
@@ -237,8 +288,8 @@
 
 <div class="meta-bar">
   <div class="meta-field full" id="field-collab">
-    <label>Votre pr&eacute;nom et nom</label>
-    <input type="text" id="input-collab" placeholder="Ex : Marie Dupont" autocomplete="name">
+    <label>Pr&eacute;nom</label>
+    <input type="text" id="input-collab" placeholder="Ex : Marie" autocomplete="given-name">
   </div>
   <div class="meta-field" id="field-restaurant">
     <label>Restaurant</label>
@@ -256,6 +307,19 @@
     <span id="progress-pct">0%</span>
   </div>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="howto" style="margin:16px 16px 0;max-width:640px;">
+  <div class="howto-title">📋 Mode d'emploi</div>
+  <ul>
+    <li>Remplir tous les champs et se <strong>RELIRE</strong> avant envoi</li>
+    <li>À envoyer tous les <strong>lundis avant 15h</strong></li>
+    <li>N'hésitez pas à insérer des remarques (DLC, mauvais état, à jeter…)</li>
+    <li>C'est le meilleur moment pour ranger dans les placards/frigos ! 🙂</li>
+    <li>Compter les <strong>contenants entiers</strong> — ex : 1,5 boîte → écrire <strong>1</strong></li>
+    <li>Inclure les <strong>réserves</strong> dans le compte</li>
+    <li>Remplir <strong>une seule fois</strong> par semaine pour éviter les décalages</li>
+  </ul>
 </div>
 
 <div id="form-body"></div>
@@ -298,7 +362,7 @@
   <div class="sentinel-card">
     <div class="s-icon">&#9888;&#65039;</div>
     <h3>V&eacute;rification du stock</h3>
-    <p id="sentinel-msg">Attention&nbsp;: &ecirc;tes-vous s&ucirc;r du stock saisi pour <strong id="sentinel-name"></strong>&nbsp;? Cette quantit&eacute; semble inhabituelle par rapport aux saisies pr&eacute;c&eacute;dentes.</p>
+    <p id="sentinel-msg">&Ecirc;tes-vous s&ucirc;r(e) d&rsquo;avoir bien renseign&eacute; la bonne quantit&eacute; pour <strong id="sentinel-name"></strong>&nbsp;?</p>
     <button class="sentinel-ok" onclick="closeSentinel()">Oui, c&rsquo;est bon</button>
   </div>
 </div>
@@ -324,7 +388,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxGmf3XP4rmm6YJV-eob5Pn6wr5zUDYz0aYB7tjuCTnWTZaJSRGk7gd6MrWn6ME1rGD/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuWHHCuMuU9wc5m9eSnGRR3_zzqjq656RKXaKDd0DNyqzVOqnONTHf8KM2bcS5SSQsVA/exec";
 const LS_KEY = "hilo_inventaire_draft";
 
 let INVENTORY = [];
@@ -442,6 +506,7 @@ async function loadCatalogue() {
         showLoading();
         await loadRestaurantCatalogue(this.value);
         hideLoading();
+        checkDerniereSoumission(this.value);
       }
     });
 
@@ -581,6 +646,8 @@ function adjust(key, delta) {
 
 function setValue(key, val) {
   values[key] = val;
+  const inp = document.getElementById("inp-" + safeKey(key));
+  if (inp) inp.classList.toggle("zero", parseFloat(val) === 0 && val !== "");
   refreshCard(key);
   updateProgress();
   saveDraft();
@@ -721,15 +788,16 @@ async function sendData(collab, restaurant, date) {
   btn.classList.add("loading");
   label.textContent = "Envoi en cours\u2026";
 
+  const now   = new Date();
+  const heure = now.getHours().toString().padStart(2,"0") + "h" + now.getMinutes().toString().padStart(2,"0");
   const payload = {
-    restaurant, date,
-    collaborateur: collab,
+    restaurant, date, heure,
+    collab,
+    pin: window._hiloPin || "",
     stocks: {}, ruptures: [], unites: {}, itemComments: {}, stocksBas: [],
-    commentaires: {
-      commandes: document.getElementById("comment-commandes").value,
-      saison:    document.getElementById("comment-saison").value,
-      general:   document.getElementById("comment-general").value
-    }
+    commentCommandes: document.getElementById("comment-commandes").value,
+    commentSaison:    document.getElementById("comment-saison").value,
+    commentGeneral:   document.getElementById("comment-general").value
   };
 
   INVENTORY.forEach(item => {
@@ -763,11 +831,13 @@ async function sendData(collab, restaurant, date) {
     }
     clearDraft();
     const nbR = payload.ruptures.length;
-    document.getElementById("success-msg").textContent =
-      INVENTORY.length + " articles envoy\u00e9s pour " + restaurant +
-      "\n" + new Date(date).toLocaleDateString("fr-FR", {day:"numeric",month:"long"}) +
+    const successEl = document.getElementById("success-msg");
+    successEl.innerHTML =
+      "<strong style='font-size:20px;display:block;margin-bottom:6px'>" + heure + "</strong>" +
+      INVENTORY.length + " articles envoy\u00e9s pour " + restaurant + "<br>" +
+      new Date(date).toLocaleDateString("fr-FR", {day:"numeric",month:"long"}) +
       " \u2014 par " + collab +
-      (nbR > 0 ? "\n\u26A0\uFE0F " + nbR + " rupture" + (nbR>1?"s":"") + " signal\u00e9e" + (nbR>1?"s":"") : "");
+      (nbR > 0 ? "<br>\u26A0\uFE0F " + nbR + " rupture" + (nbR>1?"s":"") + " signal\u00e9e" + (nbR>1?"s":"") : "");
     document.getElementById("success-screen").classList.add("show");
   } catch(e) {
     showToast("Erreur d\u2019envoi. V\u00e9rifiez votre connexion.");
@@ -791,6 +861,48 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 3200);
+}
+
+// ─── PIN ─────────────────────────────────────────────────
+window._hiloPin = "";
+
+async function checkPin() {
+  const val = document.getElementById("pin-input").value.trim();
+  if (!val) return;
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + "?action=verifierPin&pin=" + encodeURIComponent(val));
+    const data = await res.json();
+    if (data.ok) {
+      window._hiloPin = val;
+      document.getElementById("pin-screen").classList.add("hide");
+    } else {
+      document.getElementById("pin-error").textContent = "Code incorrect, réessayez.";
+      document.getElementById("pin-input").value = "";
+    }
+  } catch(e) {
+    document.getElementById("pin-error").textContent = "Erreur de connexion.";
+  }
+}
+
+// ─── DOUBLE SOUMISSION ───────────────────────────────────
+async function checkDerniereSoumission(restaurant) {
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + "?action=derniereSoumission&restaurant=" + encodeURIComponent(restaurant));
+    const data = await res.json();
+    if (data.soumiseCetteSemaine) {
+      const date = data.dateDerniereSoumission
+        ? new Date(data.dateDerniereSoumission).toLocaleDateString("fr-FR", {day:"numeric", month:"long"})
+        : "récemment";
+      document.getElementById("double-msg").textContent =
+        "Attention, l'inventaire a déjà été soumis cette semaine pour ce restaurant. " +
+        "Êtes-vous sûr(e) de vouloir le saisir de nouveau ? Dernière soumission le " + date + ".";
+      document.getElementById("double-pop").classList.add("show");
+    }
+  } catch(e) {}
+}
+
+function closeDouble() {
+  document.getElementById("double-pop").classList.remove("show");
 }
 
 loadCatalogue();
