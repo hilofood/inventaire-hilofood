@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission du Jour — Hilo Bowls</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-dark:  #1b4332;
+      --green-main:  #2d6a4f;
+      --green-mid:   #40916c;
+      --green-light: #74c69d;
+      --green-pale:  #d8f3dc;
+      --green-ultra: #f0faf4;
+      --white:       #ffffff;
+      --cream:       #f8fdf9;
+      --text:        #1b2e24;
+      --text-soft:   #4a6355;
+      --border:      #c7e6d0;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+    .header { background: var(--green-dark); color: var(--white); text-align: center; padding: 24px 20px 18px; }
+    .header-logo { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+    .header-logo span { color: var(--green-light); }
+    .header-sub { font-size: 13px; color: var(--green-light); margin-top: 4px; opacity: 0.85; }
+    .progress-wrap { background: var(--white); border-bottom: 1px solid var(--border); padding: 14px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .progress-label { font-size: 13px; font-weight: 600; color: var(--text-soft); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .progress-label span { color: var(--green-dark); font-size: 15px; font-weight: 700; }
+    .progress-bar-bg { height: 10px; background: var(--green-pale); border-radius: 99px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green-mid), var(--green-light)); border-radius: 99px; width: 0%; transition: width 0.35s ease; }
+    .progress-msg { font-size: 11px; color: var(--text-soft); margin-top: 5px; text-align: right; min-height: 16px; }
+    .form-wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 80px; }
+    .info-block { background: var(--white); border-radius: 14px; border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; }
+    .info-block label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--green-mid); margin-bottom: 6px; }
+    .info-block select, .info-block input[type="text"] { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; background: var(--green-ultra); color: var(--text); appearance: none; margin-bottom: 14px; font-family: inherit; }
+    .info-block select:focus, .info-block input[type="text"]:focus { outline: none; border-color: var(--green-mid); background: var(--white); }
+    .info-block select:last-child, .info-block input[type="text"]:last-child { margin-bottom: 0; }
+    .section { background: var(--white); border-radius: 14px; border: 1px solid var(--border); margin-bottom: 16px; overflow: hidden; }
+    .section-header { background: var(--green-dark); color: var(--white); font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 11px 18px; display: flex; justify-content: space-between; align-items: center; }
+    .section-count { background: var(--green-main); color: var(--green-pale); font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 99px; }
+    .section-count.done { background: var(--green-light); color: var(--green-dark); }
+    .item { display: flex; align-items: center; padding: 13px 18px; border-bottom: 1px solid #eef7f1; cursor: pointer; transition: background 0.15s; user-select: none; }
+    .item:last-of-type { border-bottom: none; }
+    .item:hover { background: var(--green-ultra); }
+    .item.checked { background: #f0fdf4; }
+    .checkbox-custom { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); margin-right: 13px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: var(--white); }
+    .item.checked .checkbox-custom { background: var(--green-mid); border-color: var(--green-mid); }
+    .checkbox-custom::after { content: ''; display: none; width: 5px; height: 9px; border: 2px solid var(--white); border-top: none; border-left: none; transform: rotate(45deg) translate(-1px, -1px); }
+    .item.checked .checkbox-custom::after { display: block; }
+    .item-label { font-size: 14px; color: var(--text); flex: 1; }
+    .item.checked .item-label { color: var(--text-soft); text-decoration: line-through; }
+    .section-comment { padding: 0 18px 14px; border-top: 1px dashed var(--border); }
+    .section-comment textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--green-ultra); color: var(--text); resize: none; height: 60px; font-family: inherit; margin-top: 10px; }
+    .section-comment textarea:focus { outline: none; border-color: var(--green-mid); background: var(--white); }
+    .section-comment label { font-size: 11px; color: var(--text-soft); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+    .obs-item { padding: 12px 18px; border-bottom: 1px solid #eef7f1; }
+    .obs-item:last-child { border-bottom: none; }
+    .obs-label { font-size: 12px; font-weight: 700; color: var(--green-mid); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+    .obs-item textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--green-ultra); color: var(--text); resize: none; height: 56px; font-family: inherit; }
+    .obs-item textarea:focus { outline: none; border-color: var(--green-mid); background: var(--white); }
+    .submit-wrap { text-align: center; margin-top: 24px; }
+    .btn-submit { background: var(--green-dark); color: var(--white); border: none; padding: 16px 40px; font-size: 16px; font-weight: 700; border-radius: 14px; cursor: pointer; width: 100%; max-width: 360px; transition: transform 0.1s, background 0.15s; font-family: inherit; }
+    .btn-submit:hover { background: var(--green-main); }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { background: #b7d5c3; cursor: not-allowed; }
+    .loading { display: none; font-size: 13px; color: var(--text-soft); margin-top: 10px; }
+    #success-screen { display: none; text-align: center; padding: 60px 24px; max-width: 480px; margin: 0 auto; }
+    .success-icon { font-size: 72px; margin-bottom: 20px; }
+    .success-title { font-size: 26px; font-weight: 800; color: var(--green-dark); margin-bottom: 10px; }
+    .success-sub { font-size: 15px; color: var(--text-soft); line-height: 1.6; }
+    .success-meta { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-top: 24px; font-size: 14px; color: var(--text-soft); text-align: left; line-height: 1.9; }
+    .success-meta strong { color: var(--green-dark); }
+    .confetti-piece { position: fixed; width: 8px; height: 8px; top: -10px; opacity: 0; animation: confettiFall 3s ease-in forwards; border-radius: 2px; }
+    @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-logo">HILO <span>BOWLS</span></div>
+    <div class="header-sub">Mission du Jour — Checklist RO</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label">Mission du jour <span id="progress-text">0 / 65</span></div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div class="progress-msg" id="progress-msg">Commence par sélectionner ton restaurant 👇</div>
+  </div>
+  <div class="form-wrap" id="main-form">
+    <div class="info-block">
+      <label>Restaurant</label>
+      <select id="restaurant" onchange="updateProgress()">
+        <option value="">— Sélectionner —</option>
+        <option value="Boétie">Hilo Boétie</option>
+        <option value="Cergy">Hilo Cergy</option>
+        <option value="Saint-Lazare">Hilo Saint-Lazare</option>
+      </select>
+      <label>Prénom</label>
+      <input type="text" id="prenom" placeholder="Ton prénom" oninput="updateProgress()" />
+    </div>
+    <div class="section" data-section="WC">
+      <div class="section-header">🚻 WC <span class="section-count" id="count-WC">0 / 5</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Papier toilette</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Bobine papier</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Placards rangés</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté générale</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Cuvette</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque sur les WC..."></textarea></div>
+    </div>
+    <div class="section" data-section="SALLE">
+      <div class="section-header">🪑 Salle <span class="section-count" id="count-SALLE">0 / 15</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté tables</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Agencement tables / chaises</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté sols</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Recoins / araignées</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Plantes</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Porte d'entrée</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Son actif sur les 3 enceintes</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Sol arrière comptoir</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Sol avant entrée cuisine</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Présence clés</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Gestion poubelles</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Cartons livraisons</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Lumières entrée</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Lumières salle</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Lumières extérieures (hiver)</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque sur la salle..."></textarea></div>
+    </div>
+    <div class="section" data-section="CAISSE">
+      <div class="section-header">🖥️ Espace Caisse <span class="section-count" id="count-CAISSE">0 / 11</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté générale</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Flyers</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Réassort desserts secs</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Sonnerie tablette</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Imprimantes / TPE</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Indisponibilités Rush Hour</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Indisponibilités Click &amp; Collect</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Scans bons de livraison</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Monnaie caisse</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Feuille de caisse</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Bain marie allumés</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque sur l'espace caisse..."></textarea></div>
+    </div>
+    <div class="section" data-section="VITRINE">
+      <div class="section-header">🥗 Vitrine <span class="section-count" id="count-VITRINE">0 / 7</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté vitrine</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Réassort boissons</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Réassort desserts frais</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Réassort poké</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Stickage pokés</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Produits périmés ?</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Étiquettes</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque sur la vitrine..."></textarea></div>
+    </div>
+    <div class="section" data-section="TERRASSE">
+      <div class="section-header">☀️ Terrasse <span class="section-count" id="count-TERRASSE">0 / 4</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Tables propres</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Chaises sous les tables</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Fleurs arrosées</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Panneaux extérieurs</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque sur la terrasse..."></textarea></div>
+    </div>
+    <div class="section" data-section="CUISINE">
+      <div class="section-header">👨‍🍳 Cuisine <span class="section-count" id="count-CUISINE">0 / 10</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Rangement étagères</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté sous évier</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Bobines papier</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Rangement congélateur</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Rangement frigo</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté friteuse</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté four</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté machine découpe</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Sol</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Bac à graisse</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque sur la cuisine..."></textarea></div>
+    </div>
+    <div class="section" data-section="REMISE_INT">
+      <div class="section-header">📦 Remise Intérieure <span class="section-count" id="count-REMISE_INT">0 / 2</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Rangement</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Qté &amp; produits congélateur</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque..."></textarea></div>
+    </div>
+    <div class="section" data-section="REMISE_EXT">
+      <div class="section-header">🏚️ Remise Extérieure <span class="section-count" id="count-REMISE_EXT">0 / 2</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Rangement</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Sols</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque..."></textarea></div>
+    </div>
+    <div class="section" data-section="STOCK">
+      <div class="section-header">🗂️ Stock <span class="section-count" id="count-STOCK">0 / 7</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Réassort packaging</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Stock sacs "Bon Appétit"</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Nb bols propres</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Nb verres propres</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Gestion stock riz</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Stock poulet / falafel</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Stock découpes</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque sur le stock..."></textarea></div>
+    </div>
+    <div class="section" data-section="SALADETTE">
+      <div class="section-header">🥙 Saladette <span class="section-count" id="count-SALADETTE">0 / 3</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Propreté</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Transfert</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Fermeture</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque..."></textarea></div>
+    </div>
+    <div class="section" data-section="BUREAU">
+      <div class="section-header">📋 Rapporter au Bureau <span class="section-count" id="count-BUREAU">0 / 3</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Courrier</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">Contenu caisse</div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox-custom"></div><div class="item-label">CV</div></div>
+      <div class="section-comment"><label>💬 Commentaire</label><textarea placeholder="Remarque..."></textarea></div>
+    </div>
+    <div class="section">
+      <div class="section-header">👁️ Observation Service</div>
+      <div class="obs-item"><div class="obs-label">Accueil clients</div><textarea placeholder="Observation..."></textarea></div>
+      <div class="obs-item"><div class="obs-label">Fluidité service</div><textarea placeholder="Observation..."></textarea></div>
+      <div class="obs-item"><div class="obs-label">Gestion de problèmes</div><textarea placeholder="Observation..."></textarea></div>
+      <div class="obs-item"><div class="obs-label">Caisse</div><textarea placeholder="Observation..."></textarea></div>
+      <div class="obs-item"><div class="obs-label">Hygiène</div><textarea placeholder="Observation..."></textarea></div>
+    </div>
+    <div class="submit-wrap">
+      <button class="btn-submit" id="btn-submit" onclick="handleSubmit()">✅ Envoyer la checklist</button>
+      <div class="loading" id="loading">Envoi en cours…</div>
+    </div>
+  </div>
+  <div id="success-screen">
+    <div class="success-icon">🌿</div>
+    <div class="success-title">Mission accomplie !</div>
+    <div class="success-sub">Ta checklist a bien été envoyée.<br>Beau boulot aujourd'hui 💪</div>
+    <div class="success-meta" id="success-meta"></div>
+  </div>
+  <script>
+    const APPS_SCRIPT_URL = 'COLLER_ICI_LURL_DE_TON_APPS_SCRIPT';
+    const SECTION_TOTALS = { WC:5, SALLE:15, CAISSE:11, VITRINE:7, TERRASSE:4, CUISINE:10, REMISE_INT:2, REMISE_EXT:2, STOCK:7, SALADETTE:3, BUREAU:3 };
+    const TOTAL_ITEMS = Object.values(SECTION_TOTALS).reduce((a,b)=>a+b,0);
+    const MESSAGES = [[0,0,"Commence par sélectionner ton restaurant 👇"],[1,19,"Allez, c'est parti ! 💪"],[20,39,"Bien démarré, continue !"],[40,59,"À mi-chemin, super rythme ! 🔥"],[60,79,"Presque fini, tu assures !"],[80,99,"Dernière ligne droite 🚀"],[100,100,"🏆 Parfait ! Tout est coché !"]];
+    function toggle(el){ el.classList.toggle('checked'); updateProgress(); }
+    function updateProgress(){
+      const checked=document.querySelectorAll('.item.checked').length;
+      const pct=Math.round((checked/TOTAL_ITEMS)*100);
+      document.getElementById('progress-text').textContent=checked+' / '+TOTAL_ITEMS;
+      document.getElementById('progress-fill').style.width=pct+'%';
+      const msg=MESSAGES.find(([min,max])=>pct>=min&&pct<=max);
+      if(msg) document.getElementById('progress-msg').textContent=msg[2];
+      document.querySelectorAll('.section[data-section]').forEach(sec=>{
+        const key=sec.dataset.section, total=SECTION_TOTALS[key], done=sec.querySelectorAll('.item.checked').length, el=document.getElementById('count-'+key);
+        if(el){ el.textContent=done+' / '+total; el.className='section-count'+(done===total?' done':''); }
+      });
+      if(pct===100) launchConfetti();
+    }
+    function launchConfetti(){
+      const colors=['#2d6a4f','#40916c','#74c69d','#b7e4c7','#1b4332','#52b788'];
+      for(let i=0;i<70;i++){ const c=document.createElement('div'); c.className='confetti-piece'; c.style.left=Math.random()*100+'vw'; c.style.background=colors[Math.floor(Math.random()*colors.length)]; c.style.animationDelay=Math.random()*1.5+'s'; c.style.animationDuration=(2+Math.random())+'s'; document.body.appendChild(c); setTimeout(()=>c.remove(),4000); }
+    }
+    function collectData(){
+      const restaurant=document.getElementById('restaurant').value, prenom=document.getElementById('prenom').value.trim(), now=new Date();
+      const dateStr=now.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+      const heureStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      const sections={};
+      document.querySelectorAll('.section[data-section]').forEach(sec=>{
+        const key=sec.dataset.section, items=[];
+        sec.querySelectorAll('.item').forEach(item=>items.push({label:item.querySelector('.item-label').textContent,checked:item.classList.contains('checked')}));
+        const commentEl=sec.querySelector('.section-comment textarea');
+        sections[key]={items,comment:commentEl?commentEl.value.trim():''};
+      });
+      const obs={};
+      document.querySelectorAll('.obs-item').forEach(el=>{ obs[el.querySelector('.obs-label').textContent]=el.querySelector('textarea').value.trim(); });
+      return {restaurant,prenom,date:dateStr,heure:heureStr,sections,observations:obs};
+    }
+    function handleSubmit(){
+      const restaurant=document.getElementById('restaurant').value, prenom=document.getElementById('prenom').value.trim();
+      if(!restaurant){alert('Merci de sélectionner un restaurant.');return;}
+      if(!prenom){alert("Merci d'indiquer ton prénom.");return;}
+      const checked=document.querySelectorAll('.item.checked').length;
+      if(!confirm(`Tu as validé ${checked} / ${TOTAL_ITEMS} points pour ${restaurant}.\n\nÊtes-vous sûr(e) d'envoyer la checklist ?`)) return;
+      const data=collectData(), btn=document.getElementById('btn-submit'), loading=document.getElementById('loading');
+      btn.disabled=true; loading.style.display='block';
+      fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
+        .then(r=>r.json()).then(res=>{ if(res.status==='ok') showSuccess(data); else throw new Error(res.message||'Erreur inconnue'); })
+        .catch(err=>{ alert('Erreur : '+err.message); btn.disabled=false; loading.style.display='none'; });
+    }
+    function showSuccess(data){
+      document.getElementById('main-form').style.display='none';
+      document.querySelector('.progress-wrap').style.display='none';
+      document.getElementById('success-screen').style.display='block';
+      const checked=document.querySelectorAll('.item.checked').length;
+      document.getElementById('success-meta').innerHTML=`<strong>📍 Restaurant :</strong> ${data.restaurant}<br><strong>👤 Prénom :</strong> ${data.prenom}<br><strong>🗓 Date :</strong> ${data.date}<br><strong>⏰ Heure :</strong> <strong>${data.heure}</strong><br><strong>✅ Points validés :</strong> ${checked} / ${TOTAL_ITEMS}`;
+      launchConfetti(); window.scrollTo({top:0,behavior:'smooth'});
+    }
+  </script>
+</body>
+</html>
