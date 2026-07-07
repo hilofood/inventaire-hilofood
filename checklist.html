@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Checklist RO — hilo Bowls</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
@@ -16,9 +16,11 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:"Raleway",sans-serif;background-color:var(--sand);
-    background-image:linear-gradient(rgba(255,255,255,0.40),rgba(255,255,255,0.40)),url("https://raw.githubusercontent.com/hilofood/inventaire-hilofood/main/fond2.jpg");
-    background-size:auto,cover;background-repeat:no-repeat;background-attachment:fixed;background-position:center;
-    color:var(--text);min-height:100vh;padding-bottom:100px;}
+    background-image:linear-gradient(rgba(255,255,255,0.12),rgba(255,255,255,0.12)),url("https://raw.githubusercontent.com/hilofood/inventaire-hilofood/main/fond2.jpg");
+    background-size:auto,cover;background-repeat:no-repeat;background-position:center;
+    color:var(--text);min-height:100vh;
+    padding-bottom:calc(100px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling:touch;}
 
   /* ── HEADER ── */
   .header{position:relative;height:200px;overflow:visible;}
@@ -32,11 +34,12 @@
   .header h1 span{font-weight:300;font-style:italic;}
   .header p{color:rgba(255,255,255,0.85);font-size:12px;margin-top:4px;font-weight:500;
     letter-spacing:0.14em;text-transform:uppercase;}
-  .logo-badge{position:absolute;left:50%;bottom:-40px;transform:translateX(-50%);
-    width:80px;height:80px;background:#fff;border-radius:50%;
+  .logo-badge{position:absolute;left:50%;bottom:-52px;transform:translateX(-50%);
+    width:104px;height:104px;background:#fff;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 8px 28px rgba(14,110,107,0.30);z-index:5;}
-  .logo-badge img{width:64px;border-radius:50%;object-fit:cover;}
+    box-shadow:0 8px 32px rgba(14,110,107,0.40);
+    border:4px solid var(--teal-deep);z-index:5;}
+  .logo-badge img{width:90px;border-radius:50%;object-fit:cover;}
 
   /* ── PROGRESS (sticky) ── */
   .progress-sticky{position:sticky;top:0;z-index:100;background:var(--paper);
@@ -51,7 +54,7 @@
   .progress-msg{font-size:11px;color:var(--text-soft);text-align:right;margin-top:4px;min-height:15px;}
 
   /* ── META ── */
-  .meta-bar{background:var(--paper);margin:52px 16px 0;max-width:640px;
+  .meta-bar{background:var(--paper);margin:66px 16px 0;max-width:640px;
     border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;
     display:grid;grid-template-columns:1fr 1fr;gap:12px;
     box-shadow:0 4px 18px rgba(14,110,107,0.06);}
@@ -60,9 +63,10 @@
   .meta-field.full{grid-column:1/-1;}
   .meta-field label{font-size:10px;font-weight:700;text-transform:uppercase;
     letter-spacing:0.12em;color:var(--teal);margin-bottom:6px;}
-  .meta-field input{width:100%;padding:11px 13px;border:1.5px solid var(--border);
-    border-radius:var(--radius-sm);font-family:"Raleway",sans-serif;font-size:14px;
-    font-weight:500;color:var(--text);background:var(--sand);outline:none;transition:border-color 0.2s;}
+  .meta-field input{width:100%;padding:13px 14px;border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);font-family:"Raleway",sans-serif;font-size:16px;
+    font-weight:500;color:var(--text);background:var(--sand);outline:none;transition:border-color 0.2s;
+    -webkit-appearance:none;}
   .meta-field input:focus{border-color:var(--teal);background:var(--paper);}
   .meta-field.invalid input{border-color:var(--coral);}
   .meta-field input::placeholder{color:#9eb8b6;font-style:italic;font-weight:400;}
@@ -80,8 +84,8 @@
   /* ── ITEMS ── */
   .items-list{display:flex;flex-direction:column;gap:6px;}
   .check-card{background:var(--paper);border:1.5px solid var(--border);border-radius:var(--radius);
-    padding:13px 15px;display:flex;align-items:center;gap:13px;cursor:pointer;
-    transition:border-color 0.2s,background 0.2s;-webkit-tap-highlight-color:transparent;user-select:none;}
+    padding:15px 15px;display:flex;align-items:center;gap:13px;cursor:pointer;min-height:54px;
+    transition:border-color 0.2s,background 0.2s;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation;}
   .check-card:hover{border-color:var(--teal);background:var(--lagoon);}
   .check-card.checked{border-color:var(--teal);background:#EAF7F5;}
   .checkbox{width:24px;height:24px;border-radius:7px;border:2px solid var(--border);
@@ -100,9 +104,10 @@
     border-radius:var(--radius);padding:14px 15px;margin-top:6px;}
   .section-comment-wrap label{font-size:10px;font-weight:700;text-transform:uppercase;
     letter-spacing:0.1em;color:var(--teal);display:block;margin-bottom:7px;}
-  .section-comment-wrap textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);
-    border-radius:var(--radius-sm);font-family:"Raleway",sans-serif;font-size:13px;
-    color:var(--text);background:var(--sand);resize:none;height:64px;outline:none;line-height:1.5;}
+  .section-comment-wrap textarea{width:100%;padding:12px 14px;border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);font-family:"Raleway",sans-serif;font-size:16px;
+    color:var(--text);background:var(--sand);resize:none;height:80px;outline:none;line-height:1.5;
+    -webkit-appearance:none;}
   .section-comment-wrap textarea:focus{border-color:var(--teal);background:var(--paper);}
   .section-comment-wrap textarea::placeholder{color:#9eb8b6;font-style:italic;font-weight:400;}
 
@@ -111,18 +116,20 @@
     padding:14px 15px;margin-bottom:6px;}
   .obs-card label{font-size:10px;font-weight:700;text-transform:uppercase;
     letter-spacing:0.1em;color:var(--teal);display:block;margin-bottom:7px;}
-  .obs-card textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);
-    border-radius:var(--radius-sm);font-family:"Raleway",sans-serif;font-size:13px;
-    color:var(--text);background:var(--sand);resize:none;height:64px;outline:none;line-height:1.5;}
+  .obs-card textarea{width:100%;padding:12px 14px;border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);font-family:"Raleway",sans-serif;font-size:16px;
+    color:var(--text);background:var(--sand);resize:none;height:80px;outline:none;line-height:1.5;
+    -webkit-appearance:none;}
   .obs-card textarea:focus{border-color:var(--teal);background:var(--paper);}
   .obs-card textarea::placeholder{color:#9eb8b6;font-style:italic;font-weight:400;}
 
   /* ── BOUTON ENVOI ── */
   .submit-wrap{margin:28px 16px 0;max-width:640px;text-align:center;}
   .btn-submit{width:100%;max-width:420px;background:var(--teal-deep);color:#fff;border:none;
-    padding:17px;font-size:16px;font-weight:800;border-radius:var(--radius);cursor:pointer;
+    padding:19px;font-size:17px;font-weight:800;border-radius:var(--radius);cursor:pointer;
     font-family:"Raleway",sans-serif;letter-spacing:0.02em;
-    transition:background 0.15s,transform 0.1s;-webkit-tap-highlight-color:transparent;}
+    transition:background 0.15s,transform 0.1s;-webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;-webkit-appearance:none;}
   .btn-submit:hover{background:var(--teal-ink);}
   .btn-submit:active{transform:scale(0.98);}
   .btn-submit:disabled{background:#9eb8b6;cursor:not-allowed;}
