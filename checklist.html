@@ -508,7 +508,11 @@
     if (!ok) { alert('Merci de renseigner le restaurant et ton prénom.'); return; }
 
     const checked = document.querySelectorAll('.check-card.checked').length;
-    if (!confirm(`Tu as validé ${checked} / ${TOTAL} points pour ${restaurant}.\n\nÊtes-vous sûr(e) d'envoyer la checklist ?`)) return;
+    if (checked < TOTAL) {
+      alert(`❌ Checklist incomplète !\n\nTu as validé ${checked} / ${TOTAL} points.\n\nTu dois cocher tous les points avant d'envoyer.`);
+      return;
+    }
+    if (!confirm(`✅ Checklist complète — ${TOTAL} / ${TOTAL} points pour ${restaurant}.\n\nÊtes-vous sûr(e) d'envoyer ?`)) return;
 
     const data = collectData();
     document.getElementById('btn-submit').disabled = true;
