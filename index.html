@@ -312,16 +312,7 @@
 
 <div class="howto" style="margin:16px 16px 0;max-width:640px;">
   <div class="howto-title">📋 Mode d'emploi</div>
-  <ul>
-    <li>Remplir tous les champs et se <strong>RELIRE</strong> avant envoi</li>
-    <li>À envoyer tous les <strong>lundis avant 15h</strong></li>
-    <li>N'hésitez pas à insérer des remarques (DLC, mauvais état, à jeter…)</li>
-    <li>C'est le meilleur moment pour ranger dans les placards/frigos ! 🙂</li>
-    <li>Compter les <strong>contenants entiers</strong> — ex : 1,5 boîte → écrire <strong>1</strong></li>
-    <li>Inclure les <strong>réserves</strong> dans le compte</li>
-    <li>Remplir <strong>une seule fois</strong> par semaine pour éviter les décalages</li>
-    <li>⚠️ L'envoi peut prendre <strong>1 à 2 minutes</strong> — merci de patienter avant la confirmation</li>
-  </ul>
+  <ul id="howto-list"></ul>
 </div>
 
 <div id="form-body"></div>
@@ -479,6 +470,38 @@ function applyDraft(draft) {
   updateProgress();
 }
 
+// ─── MODE D'EMPLOI (éditable depuis Google Sheets) ──────────
+const DEFAULT_HOWTO = [
+  "Remplir tous les champs et se <strong>RELIRE</strong> avant envoi",
+  "À envoyer tous les <strong>lundis avant 15h</strong>",
+  "N'hésitez pas à insérer des remarques (DLC, mauvais état, à jeter…)",
+  "C'est le meilleur moment pour ranger dans les placards/frigos ! 🙂",
+  "Compter les <strong>contenants entiers</strong> — ex : 1,5 boîte → écrire <strong>1</strong>",
+  "Inclure les <strong>réserves</strong> dans le compte",
+  "Remplir <strong>une seule fois</strong> par semaine pour éviter les décalages",
+  "⚠️ L'envoi peut prendre <strong>1 à 2 minutes</strong> — merci de patienter avant la confirmation",
+];
+
+function renderHowto(items) {
+  const ul = document.getElementById("howto-list");
+  if (!ul) return;
+  ul.innerHTML = items.map(t => `<li>${t}</li>`).join("");
+}
+
+async function loadModeEmploi() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "VOTRE_URL_WEB_APP_ICI") {
+    renderHowto(DEFAULT_HOWTO);
+    return;
+  }
+  try {
+    const r = await fetch(APPS_SCRIPT_URL + "?action=modeEmploi");
+    const d = await r.json();
+    renderHowto((d.items && d.items.length) ? d.items : DEFAULT_HOWTO);
+  } catch (e) {
+    renderHowto(DEFAULT_HOWTO);
+  }
+}
+
 // ─── CHARGEMENT ──────────────────────────────────────────
 async function loadCatalogue() {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "VOTRE_URL_WEB_APP_ICI") {
@@ -492,7 +515,7 @@ async function loadCatalogue() {
       {cat:"Sec",      article:"Riz Shinjumai 20kg",       unite:"un sac de 20kg"},
       {cat:"Boissons", article:"Coca Cola rouge 33cl",     unite:"une cannette"}
     ];
-    buildRestaurants(["HiloFood Saint-Lazare", "HiloFood Cergy", "HiloFood Boetie"]);
+    buildRestaurants(["Hilo Saint-Lazare", "Hilo Cergy", "Hilo Boétie"]);
     buildForm();
     hideLoading();
     return;
@@ -933,6 +956,7 @@ function closeDouble() {
 }
 
 loadCatalogue();
+loadModeEmploi();
 </script>
 </body>
 </html>
