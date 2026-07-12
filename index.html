@@ -572,8 +572,11 @@ function buildRestaurants(restaurants) {
   const sel = document.getElementById("select-restaurant");
   sel.innerHTML = "<option value=''>Choisir\u2026</option>";
   restaurants.forEach(r => {
+    // r peut \u00eatre une simple cha\u00eene (id = nom affich\u00e9) ou un objet {id, nom}
+    const id  = (typeof r === "string") ? r : r.id;
+    const nom = (typeof r === "string") ? r : (r.nom || r.id);
     const opt = document.createElement("option");
-    opt.value = r; opt.textContent = r;
+    opt.value = id; opt.textContent = nom;
     sel.appendChild(opt);
   });
 }
