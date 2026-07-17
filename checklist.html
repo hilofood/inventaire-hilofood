@@ -95,12 +95,14 @@
   .select-card.ouverture{border-color:#F4913A;}
   .select-card.qualite{border-color:var(--teal-deep);}
   .select-card.fermeture{border-color:#5C6BC0;}
+  .select-card.recap{border-color:#C0562F;}
   .select-emoji{font-size:34px;flex-shrink:0;}
   .select-name{font-size:17px;font-weight:800;color:var(--text);margin-bottom:3px;}
   .select-desc{font-size:12px;color:var(--text-soft);}
   .select-card.ouverture .select-name{color:var(--orange-deep);}
   .select-card.qualite .select-name{color:var(--teal-deep);}
   .select-card.fermeture .select-name{color:var(--moon-deep);}
+  .select-card.recap .select-name{color:#C0562F;}
   .btn-sync{display:block;margin:22px auto 0;background:none;border:1.5px solid var(--border);
     border-radius:99px;padding:9px 18px;font-family:"Raleway",sans-serif;font-size:13px;
     font-weight:700;color:var(--teal-deep);cursor:pointer;
@@ -123,6 +125,7 @@
   .progress-type.ouverture{background:var(--orange-deep);}
   .progress-type.qualite{background:var(--teal-deep);}
   .progress-type.fermeture{background:var(--moon-deep);}
+  .progress-type.recap{background:#C0562F;}
 
   /* META */
   .meta-bar{background:var(--paper);margin:20px 16px 0;max-width:640px;
@@ -297,6 +300,13 @@
         <div class="select-desc" id="desc-fermeture">Checklist du soir</div>
       </div>
     </div>
+    <div class="select-card recap" onclick="selectType('recap')">
+      <div class="select-emoji">📝</div>
+      <div class="select-info">
+        <div class="select-name">Récap fin de journée</div>
+        <div class="select-desc" id="desc-recap">5 points à renseigner</div>
+      </div>
+    </div>
   </div>
   <button class="btn-sync" onclick="syncNow()">🔄 Synchroniser la checklist</button>
   <div class="sync-info" id="sync-info"></div>
@@ -363,9 +373,18 @@
   var TYPE_META = {
     ouverture:{key:'matin', name:'Ouverture Matin', emoji:'☀️', cls:'ouverture', defIcon:'☀️'},
     qualite:  {key:'qualite',name:'Checklist Qualité',emoji:'📋', cls:'qualite',  defIcon:'📋'},
-    fermeture:{key:'soir',  name:'Fermeture Soir', emoji:'🌙', cls:'fermeture', defIcon:'🌙'}
+    fermeture:{key:'soir',  name:'Fermeture Soir', emoji:'🌙', cls:'fermeture', defIcon:'🌙'},
+    recap:    {key:'recap', name:'Récapitulatif fin de journée', emoji:'📝', cls:'recap', defIcon:'📝'}
   };
   var OBS_QUALITE = ['Accueil clients','Fluidité service','Gestion de problèmes','Caisse','Hygiène'];
+  // Sections du récapitulatif de fin de journée (zones de texte obligatoires)
+  var RECAP_SECTIONS = [
+    {label:'Service client', icon:'🙋'},
+    {label:'Technique',      icon:'🔧'},
+    {label:'Stock',          icon:'📦'},
+    {label:'RH',             icon:'👥'},
+    {label:'Retard staff',   icon:'⏰'}
+  ];
 
   var APP = { code:FALLBACK_CODE, restos:FALLBACK_RESTOS.slice(), data:{}, resto:null, type:null, sections:[], TOTAL:0 };
 
@@ -514,11 +533,17 @@
   function selectType(type){
     APP.type = type;
     var meta = TYPE_META[type];
-    var cl = getChecklists(APP.resto);
-    APP.sections = groupSections(cl[meta.key], meta.name, meta.defIcon);
-    APP.TOTAL = APP.sections.reduce(function(a,s){return a+s.items.length;},0);
+    APP.isRecap = (type === 'recap');
 
-    if (APP.TOTAL === 0){ toast('Cette checklist est vide dans le Sheet'); return; }
+    if (APP.isRecap){
+      APP.sections = [];
+      APP.TOTAL = RECAP_SECTIONS.length;
+    } else {
+      var cl = getChecklists(APP.resto);
+      APP.sections = groupSections(cl[meta.key], meta.name, meta.defIcon);
+      APP.TOTAL = APP.sections.reduce(function(a,s){return a+s.items.length;},0);
+      if (APP.TOTAL === 0){ toast('Cette checklist est vide dans le Sheet'); return; }
+    }
 
     document.getElementById('selection-screen').style.display='none';
     document.getElementById('progress-bar').style.display='block';
@@ -542,6 +567,20 @@
   function renderSections(type){
     var container = document.getElementById('sections-container');
     container.innerHTML='';
+
+    if (type === 'recap'){
+      RECAP_SECTIONS.forEach(function(sec, i){
+        var html = '<div class="section"><div class="section-header">'+
+          '<div class="section-icon">'+sec.icon+'</div>'+
+          '<div class="section-title">'+esc(sec.label)+'</div>'+
+          '<div class="section-count" id="rcnt-'+i+'">À remplir</div></div>'+
+          '<div class="obs-card"><textarea class="recap-ta" data-recap="'+esc(sec.label)+'" '+
+          'oninput="updateProgress()" placeholder="Décris ici la situation '+esc(sec.label.toLowerCase())+'..."></textarea></div></div>';
+        container.insertAdjacentHTML('beforeend', html);
+      });
+      return;
+    }
+
     APP.sections.forEach(function(sec){
       var n = sec.items.length;
       var html = '<div class="section"><div class="section-header">'+
@@ -568,6 +607,22 @@
   function toggle(el){ el.classList.toggle('checked'); updateProgress(); }
 
   function updateProgress(){
+    if (APP.isRecap){
+      var done = 0;
+      document.querySelectorAll('[data-recap]').forEach(function(ta, i){
+        var rempli = ta.value.trim().length > 0;
+        if (rempli) done++;
+        var el = document.getElementById('rcnt-'+i);
+        if (el){ el.textContent = rempli ? '✓ rempli' : 'À remplir'; el.className='section-count'+(rempli?' done':''); }
+      });
+      var pctR = APP.TOTAL ? Math.round((done/APP.TOTAL)*100) : 0;
+      document.getElementById('prog-text').textContent = done+' / '+APP.TOTAL;
+      document.getElementById('prog-fill').style.width = pctR+'%';
+      var msgR = MSGS.find(function(m){ return pctR>=m[0] && pctR<=m[1]; });
+      if (msgR) document.getElementById('prog-msg').textContent = msgR[2];
+      if (pctR===100) launchConfetti();
+      return;
+    }
     var checked = document.querySelectorAll('.check-card.checked').length;
     var pct = APP.TOTAL ? Math.round((checked/APP.TOTAL)*100) : 0;
     document.getElementById('prog-text').textContent = checked+' / '+APP.TOTAL;
@@ -600,6 +655,17 @@
     var now = new Date();
     var date = now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     var heure = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+    if (APP.isRecap){
+      var textSections = [];
+      document.querySelectorAll('[data-recap]').forEach(function(ta){
+        textSections.push({titre: ta.dataset.recap, texte: ta.value.trim()});
+      });
+      var metaR = TYPE_META[APP.type];
+      return {type:metaR.name, typeEmoji:metaR.emoji, restaurant:APP.resto, prenom:prenom,
+              date:date, heure:heure, sections:{}, observations:{}, textSections:textSections};
+    }
+
     var sections = {};
     document.querySelectorAll('[data-section]').forEach(function(list){
       var sec = APP.sections.find(function(s){return s.key===list.dataset.section;});
@@ -624,12 +690,24 @@
     if (!prenom){ document.getElementById('field-prenom').classList.add('invalid'); alert('Merci de renseigner ton prénom.'); return; }
     document.getElementById('field-prenom').classList.remove('invalid');
 
-    var checked = document.querySelectorAll('.check-card.checked').length;
-    if (checked < APP.TOTAL){
-      alert('❌ Checklist incomplète !\n\nTu as validé '+checked+' / '+APP.TOTAL+' points.\n\nTu dois cocher tous les points avant d\'envoyer.');
-      return;
+    if (APP.isRecap){
+      var manquants = [];
+      document.querySelectorAll('[data-recap]').forEach(function(ta){
+        if (!ta.value.trim()) manquants.push(ta.dataset.recap);
+      });
+      if (manquants.length){
+        alert('❌ Récapitulatif incomplet !\n\nÀ compléter : '+manquants.join(', ')+'.\n\nChaque section doit être renseignée avant d\'envoyer.');
+        return;
+      }
+      if (!confirm('✅ Récapitulatif de fin de journée complet pour '+APP.resto+'.\n\nÊtes-vous sûr(e) d\'envoyer ?')) return;
+    } else {
+      var checked = document.querySelectorAll('.check-card.checked').length;
+      if (checked < APP.TOTAL){
+        alert('❌ Checklist incomplète !\n\nTu as validé '+checked+' / '+APP.TOTAL+' points.\n\nTu dois cocher tous les points avant d\'envoyer.');
+        return;
+      }
+      if (!confirm('✅ Checklist complète — '+APP.TOTAL+' / '+APP.TOTAL+' points pour '+APP.resto+'.\n\nÊtes-vous sûr(e) d\'envoyer ?')) return;
     }
-    if (!confirm('✅ Checklist complète — '+APP.TOTAL+' / '+APP.TOTAL+' points pour '+APP.resto+'.\n\nÊtes-vous sûr(e) d\'envoyer ?')) return;
 
     var data = collectData();
     document.getElementById('btn-submit').disabled = true;
@@ -648,13 +726,16 @@
     document.getElementById('main-form').style.display='none';
     document.getElementById('progress-bar').style.display='none';
     document.getElementById('success-screen').style.display='block';
+    var ligneFin = APP.isRecap
+      ? '<strong>✅ Sections remplies :</strong> '+APP.TOTAL+' / '+APP.TOTAL
+      : '<strong>✅ Points validés :</strong> '+APP.TOTAL+' / '+APP.TOTAL;
     document.getElementById('success-recap').innerHTML =
       '<strong>📋 Type :</strong> '+data.typeEmoji+' '+data.type+'<br>'+
       '<strong>📍 Restaurant :</strong> '+data.restaurant+'<br>'+
       '<strong>👤 Prénom :</strong> '+data.prenom+'<br>'+
       '<strong>🗓 Date :</strong> '+data.date+'<br>'+
       '<strong>⏰ Heure :</strong> <strong>'+data.heure+'</strong><br>'+
-      '<strong>✅ Points validés :</strong> '+APP.TOTAL+' / '+APP.TOTAL;
+      ligneFin;
     launchConfetti();
     window.scrollTo({top:0,behavior:'smooth'});
   }
