@@ -377,14 +377,19 @@
     recap:    {key:'recap', name:'Récapitulatif fin de journée', emoji:'📝', cls:'recap', defIcon:'📝'}
   };
   var OBS_QUALITE = ['Accueil clients','Fluidité service','Gestion de problèmes','Caisse','Hygiène'];
-  // Sections du récapitulatif de fin de journée (zones de texte obligatoires)
-  var RECAP_SECTIONS = [
-    {label:'Service client', icon:'🙋'},
-    {label:'Technique',      icon:'🔧'},
-    {label:'Stock',          icon:'📦'},
-    {label:'RH',             icon:'👥'},
-    {label:'Retard staff',   icon:'⏰'}
-  ];
+  // Récapitulatif de fin de journée : rubriques modifiables dans le Google Sheet (colonne Récap).
+  // Liste de secours si le Sheet n'en fournit pas.
+  var RECAP_DEFAUT = ['Service client','Technique','Stock','RH','Retard staff','Autres'];
+  // Icônes par rubrique de récap (défaut 📝 si inconnue)
+  var RECAP_ICONS = {
+    'Service client':'🙋','Technique':'🔧','Stock':'📦','RH':'👥','Retard staff':'⏰','Autres':'🗒️'
+  };
+  // Renvoie la liste des rubriques de récap pour le resto courant (Sheet ou défaut)
+  function getRecapSections(){
+    var cl = getChecklists(APP.resto);
+    var list = (cl && cl.recap && cl.recap.length) ? cl.recap : RECAP_DEFAUT;
+    return list.map(function(label){ return {label:label, icon: RECAP_ICONS[label] || '🗒️'}; });
+  }
 
   var APP = { code:FALLBACK_CODE, restos:FALLBACK_RESTOS.slice(), data:{}, resto:null, type:null, sections:[], TOTAL:0 };
 
@@ -515,6 +520,8 @@
     document.getElementById('desc-ouverture').textContent = (cl.matin?cl.matin.length:0) + ' points — checklist du matin';
     document.getElementById('desc-qualite').textContent   = (cl.qualite?cl.qualite.length:0) + ' points — contrôle qualité';
     document.getElementById('desc-fermeture').textContent = (cl.soir?cl.soir.length:0) + ' points — checklist du soir';
+    var nbRecap = (cl.recap && cl.recap.length) ? cl.recap.length : RECAP_DEFAUT.length;
+    document.getElementById('desc-recap').textContent = nbRecap + ' rubriques à renseigner';
     document.getElementById('selection-screen').style.display='block';
     window.scrollTo({top:0,behavior:'smooth'});
   }
@@ -537,7 +544,8 @@
 
     if (APP.isRecap){
       APP.sections = [];
-      APP.TOTAL = RECAP_SECTIONS.length;
+      APP.recapList = getRecapSections();
+      APP.TOTAL = APP.recapList.length;
     } else {
       var cl = getChecklists(APP.resto);
       APP.sections = groupSections(cl[meta.key], meta.name, meta.defIcon);
@@ -569,7 +577,7 @@
     container.innerHTML='';
 
     if (type === 'recap'){
-      RECAP_SECTIONS.forEach(function(sec, i){
+      (APP.recapList || getRecapSections()).forEach(function(sec, i){
         var html = '<div class="section"><div class="section-header">'+
           '<div class="section-icon">'+sec.icon+'</div>'+
           '<div class="section-title">'+esc(sec.label)+'</div>'+
