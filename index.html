@@ -164,6 +164,27 @@
   .type-emoji{font-size:26px;flex-shrink:0;}
   .type-name{font-size:15px;font-weight:800;color:var(--text);}
   .type-desc{font-size:11.5px;color:var(--text-soft);margin-top:2px;}
+  /* ── Liens historique + écrans de consultation ── */
+  .histo-links{display:flex;flex-direction:column;gap:6px;margin-top:22px;width:100%;max-width:360px;
+    align-items:center;}
+  .histo-link{font-size:12.5px;color:var(--teal-deep);font-weight:700;cursor:pointer;text-decoration:underline;
+    text-underline-offset:2px;}
+  .histo-list{display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;}
+  .histo-item{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+    padding:13px 16px;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s;}
+  .histo-item:active{border-color:var(--teal);background:var(--lagoon);}
+  .histo-item .hi-date{font-size:14px;font-weight:800;color:var(--text);}
+  .histo-item .hi-meta{font-size:11.5px;color:var(--text-soft);margin-top:2px;}
+  .histo-empty{font-size:13px;color:var(--text-soft);text-align:center;margin-top:20px;}
+  .histo-detail-body{width:100%;max-width:460px;}
+  .histo-cat{font-size:11px;font-weight:800;text-transform:uppercase;color:var(--teal-deep);
+    margin:16px 0 6px;border-bottom:2px solid var(--lagoon);padding-bottom:4px;}
+  .histo-row{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;
+    border-bottom:1px solid var(--border);font-size:13px;}
+  .histo-row .hr-nom{color:var(--text);}
+  .histo-row .hr-qty{font-weight:700;color:var(--text);}
+  .histo-row.rupture .hr-qty{color:#C62828;}
+  .histo-row .hr-qty.zero{color:#C62828;}
   /* ── Barre de contexte discrète en haut du formulaire ── */
   .context-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 16px;margin:0 16px;
     font-size:11px;color:var(--text-soft);}
@@ -321,6 +342,34 @@
       </div>
     </div>
   </div>
+  <div class="histo-links">
+    <span class="histo-link" onclick="showHistoriqueListe('récurrent')">📜 Historique récurrent</span>
+    <span class="histo-link" onclick="showHistoriqueListe('non récurrent')">📜 Historique non récurrent</span>
+  </div>
+</div>
+
+<!-- ── Écran liste historique (lecture seule) ── -->
+<div class="choice-screen" id="screen-histo-liste">
+  <div class="resto-bar" onclick="changeType()">
+    <span>📍</span>
+    <span class="rb-name" id="histo-liste-title">—</span>
+    <span class="rb-change">retour</span>
+  </div>
+  <p class="choice-title" id="histo-liste-heading">Historique</p>
+  <p class="choice-sub">Les 15 derniers jours — consultation uniquement</p>
+  <div class="histo-list" id="histo-list"></div>
+</div>
+
+<!-- ── Écran détail d'un inventaire passé (lecture seule) ── -->
+<div class="choice-screen" id="screen-histo-detail">
+  <div class="resto-bar" onclick="backToHistoriqueListe()">
+    <span>📍</span>
+    <span class="rb-name" id="histo-detail-title">—</span>
+    <span class="rb-change">retour</span>
+  </div>
+  <p class="choice-title" id="histo-detail-heading">—</p>
+  <p class="choice-sub" id="histo-detail-sub"></p>
+  <div class="histo-detail-body" id="histo-detail-body"></div>
 </div>
 
 <!-- ── Popup double soumission ── -->
@@ -652,6 +701,8 @@ function afterAuth() {
 
 function showRestoPicker() {
   document.getElementById("screen-type").classList.remove("show");
+  document.getElementById("screen-histo-liste").classList.remove("show");
+  document.getElementById("screen-histo-detail").classList.remove("show");
   document.getElementById("page-content").style.display = "none";
   renderRestoGrid();
   document.getElementById("screen-resto").classList.add("show");
@@ -685,6 +736,8 @@ function changeResto() {
 
 function showTypeScreen() {
   document.getElementById("page-content").style.display = "none";
+  document.getElementById("screen-histo-liste").classList.remove("show");
+  document.getElementById("screen-histo-detail").classList.remove("show");
   document.getElementById("resto-bar-name").textContent = restoNom(currentResto);
   document.getElementById("screen-type").classList.add("show");
 }
@@ -706,6 +759,97 @@ async function selectType(type) {
   hideLoading();
   checkDerniereSoumission(currentResto, currentType);
   window.scrollTo(0, 0);
+}
+
+// ─── HISTORIQUE (consultation en lecture seule) ─────────
+let histoTypeActuel = null;
+
+async function showHistoriqueListe(type) {
+  histoTypeActuel = type;
+  document.getElementById("screen-type").classList.remove("show");
+  document.getElementById("histo-liste-title").textContent = restoNom(currentResto);
+  document.getElementById("histo-liste-heading").textContent =
+    (type === "non récurrent") ? "Historique non récurrent" : "Historique récurrent";
+  document.getElementById("histo-list").innerHTML = "<p class='histo-empty'>Chargement…</p>";
+  document.getElementById("screen-histo-liste").classList.add("show");
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + "?action=historiqueListe&restaurant=" + encodeURIComponent(currentResto) + "&type=" + encodeURIComponent(type));
+    const data = await res.json();
+    renderHistoriqueListe(data.items || []);
+  } catch (e) {
+    document.getElementById("histo-list").innerHTML = "<p class='histo-empty'>Impossible de charger l'historique.</p>";
+  }
+}
+
+function renderHistoriqueListe(items) {
+  const box = document.getElementById("histo-list");
+  if (!items.length) {
+    box.innerHTML = "<p class='histo-empty'>Aucun inventaire soumis ces 15 derniers jours.</p>";
+    return;
+  }
+  box.innerHTML = items.map(it => {
+    const dateFr = new Date(it.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    return `<button class="histo-item" onclick="openHistoriqueDetail(${it.col})">
+      <div class="hi-date">${dateFr}</div>
+      <div class="hi-meta">${it.heure} · ${it.collab}</div>
+    </button>`;
+  }).join("");
+}
+
+async function openHistoriqueDetail(col) {
+  document.getElementById("screen-histo-liste").classList.remove("show");
+  document.getElementById("histo-detail-body").innerHTML = "<p class='histo-empty'>Chargement…</p>";
+  document.getElementById("screen-histo-detail").classList.add("show");
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + "?action=historiqueDetail&restaurant=" + encodeURIComponent(currentResto) + "&type=" + encodeURIComponent(histoTypeActuel) + "&col=" + col);
+    const data = await res.json();
+    renderHistoriqueDetail(data);
+  } catch (e) {
+    document.getElementById("histo-detail-body").innerHTML = "<p class='histo-empty'>Impossible de charger le détail.</p>";
+  }
+}
+
+function renderHistoriqueDetail(data) {
+  document.getElementById("histo-detail-title").textContent = restoNom(currentResto);
+  const dateFr = data.date
+    ? new Date(data.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+    : "—";
+  document.getElementById("histo-detail-heading").textContent = dateFr;
+  document.getElementById("histo-detail-sub").textContent = data.heure && data.collab
+    ? data.heure + " · " + data.collab : "";
+
+  const body = document.getElementById("histo-detail-body");
+  if (data.error || !data.items || !data.items.length) {
+    body.innerHTML = "<p class='histo-empty'>Aucune donnée pour cet inventaire.</p>";
+    return;
+  }
+
+  const parCat = {};
+  data.items.forEach(it => {
+    if (!parCat[it.cat]) parCat[it.cat] = [];
+    parCat[it.cat].push(it);
+  });
+
+  let html = "";
+  Object.entries(parCat).forEach(([cat, produits]) => {
+    html += `<div class="histo-cat">${cat}</div>`;
+    produits.forEach(p => {
+      const isZero = !p.rupture && p.qty === 0;
+      const valeur = p.rupture ? "RUPTURE" : (p.qty === null ? "—" : p.qty);
+      html += `<div class="histo-row${p.rupture ? " rupture" : ""}">
+        <span class="hr-nom">${p.nom}</span>
+        <span class="hr-qty${isZero ? " zero" : ""}">${valeur}</span>
+      </div>`;
+    });
+  });
+  body.innerHTML = html;
+}
+
+function backToHistoriqueListe() {
+  document.getElementById("screen-histo-detail").classList.remove("show");
+  document.getElementById("screen-histo-liste").classList.add("show");
 }
 
 // ─── FORMULAIRE ──────────────────────────────────────────
